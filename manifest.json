@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "DipendentiInCloud Exit Time",
+  "version": "1.0.0",
+  "description": "Shows expected exit time directly on the dashboard",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://secure.dipendentincloud.it/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ]
+    }
+  ]
+}

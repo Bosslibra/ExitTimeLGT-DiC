@@ -1,0 +1,99 @@
+#dic-exit-widget {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #111827;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.dic-row-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.dic-exit-time {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #111827;
+    font-variant-numeric: tabular-nums;
+}
+
+    .dic-exit-time::before {
+        content: "Uscita";
+        font-size: 11px;
+        line-height: 1.2;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: #6b7280;
+    }
+
+.dic-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: right;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #4b5563;
+    font-variant-numeric: tabular-nums;
+}
+
+    .dic-mini strong {
+        font-weight: 600;
+        color: #111827;
+        margin-right: 4px;
+    }
+
+.dic-break {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    background: #f3f4f6;
+    color: #374151;
+}
+
+    .dic-break::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: currentColor;
+    }
+
+    .dic-break.is-ok {
+        background: #ecfdf3;
+        color: #15703d;
+    }
+
+    .dic-break.is-warn {
+        background: #fef2f2;
+        color: #b42318;
+    }
+
+@media (max-width: 480px) {
+    .dic-row-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dic-mini {
+        text-align: left;
+    }
+}
