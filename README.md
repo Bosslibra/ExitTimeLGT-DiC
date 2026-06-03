@@ -12,8 +12,8 @@ Small Chrome extension that shows the expected exit time on the Dipendenti in Cl
 
 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/dic-exit-time.git
-cd dic-exit-time
+git clone https://github.com/Bosslibra/ExitTimeLGT-DiC.git
+cd ExitTimeLGT-DiC
 ```
 
 2. Open `chrome://extensions/` or `edge://extensions/` or `brave://extensions/` in your browser
