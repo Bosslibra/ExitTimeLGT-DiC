@@ -2,26 +2,27 @@
 
 Small Chrome extension that shows the expected exit time on the Dipendenti in Cloud dashboard.
 
-## Files
-
-- `manifest.json`
-- `content.js`
-- `styles.css`
-
 ## Install
 
-1. Clone the repository
 ```bash
 git clone https://github.com/Bosslibra/ExitTimeLGT-DiC.git
 cd ExitTimeLGT-DiC
 ```
 
-2. Open `chrome://extensions/` or `edge://extensions/` or `brave://extensions/` in your browser
-3. Enable **Developer mode**
-4. Click **Load unpacked**
-5. Select the extension folder
+1. Open `chrome://extensions/` or `edge://extensions/` or `brave://extensions/`
+2. Enable **Developer mode**
+3. Click **Load unpacked**
+4. Select this project folder
+
+## Settings
+
+Click the extension icon to set:
+
+- hours per day
+- break min
+- break max
 
 ## Notes
 
 - Runs on `https://secure.dipendentincloud.it/*`
-- Refresh the extension after changes from `chrome://extensions/`
+- Refresh the extension from `chrome://extensions/` after changes

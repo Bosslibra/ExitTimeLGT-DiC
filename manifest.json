@@ -1,8 +1,13 @@
 {
   "manifest_version": 3,
   "name": "DipendentiInCloud Exit Time",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Shows expected exit time directly on the dashboard",
+  "permissions": [ "storage" ],
+  "action": {
+    "default_title": "DipendentiInCloud Exit Time",
+    "default_popup": "popup.html"
+  },
   "content_scripts": [
     {
       "matches": [

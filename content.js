@@ -1,3 +1,13 @@
+const DEFAULT_SETTINGS = {
+    dailyHours: 8,
+    breakMin: 45,
+    breakMax: 60
+};
+
+async function getSettings() {
+    const settings = await chrome.storage.sync.get(DEFAULT_SETTINGS);
+    return settings;
+}
 function timeToMinutes(time) {
     const [h, m] = time.split(":").map(Number);
     return h * 60 + m;
@@ -59,17 +69,20 @@ function getBreakColor(minutes) {
     }
     return "#2e7d32"; // verde
 }
-function calculate(data) {
+
+
+function calculate(data, settings) {
     const entry = timeToMinutes(data.entry);
     const lunchStart = timeToMinutes(data.lunchStart);
     const lunchEndActual = timeToMinutes(data.lunchEnd);
 
     const lunchDuration = lunchEndActual - lunchStart;
     const morningWorked = lunchStart - entry;
+    const dailyMinutes = Math.round(settings.dailyHours * 60);
 
     const exitMinutes =
         lunchEndActual +
-        (480 - morningWorked);
+        (dailyMinutes - morningWorked);
 
     const now = new Date();
     const currentMinutes =
@@ -83,7 +96,7 @@ function calculate(data) {
         morningWorked + afternoonWorked;
 
     const remaining =
-        Math.max(0, 480 - worked);
+        Math.max(0, dailyMinutes - worked);
 
     return {
         lunchDuration,
@@ -93,12 +106,12 @@ function calculate(data) {
     };
 }
 
-function renderWidget() {
-
+async function renderWidget() {
     const data = parseDashboard();
     if (!data) return;
 
-    const stats = calculate(data);
+    const settings = await getSettings();
+    const stats = calculate(data, settings);
 
     let widget = document.getElementById("dic-exit-widget");
 
@@ -109,8 +122,8 @@ function renderWidget() {
         const target =
             document.querySelector(".dic-dashboard-card-content") ||
             document.querySelector("dic-dashboard-card-content");
-        if (!target) return;
 
+        if (!target) return;
         target.appendChild(widget);
     }
 
@@ -118,26 +131,24 @@ function renderWidget() {
         timeToMinutes(data.lunchEnd) - timeToMinutes(data.lunchStart);
 
     const breakClass =
-        breakMinutes >= 45 && breakMinutes <= 60
-            ? "is-ok"
-            : "is-warn";
+        breakMinutes < settings.breakMin || breakMinutes > settings.breakMax
+            ? "is-warn"
+            : "is-ok";
 
     widget.innerHTML = `
-    <div class="dic-row-top">
-        <div class="dic-exit-time">
-            ${stats.exitTime}
+        <div class="dic-row-top">
+            <div class="dic-exit-time">${stats.exitTime}</div>
+
+            <div class="dic-mini">
+                <div><strong>Lavorato</strong> ${formatDuration(stats.worked)}</div>
+                <div><strong>Residuo</strong> ${formatDuration(stats.remaining)}</div>
+            </div>
         </div>
 
-        <div class="dic-mini">
-            <div><strong>Lavorato:</strong> ${formatDuration(stats.worked)}</div>
-            <div><strong>Residuo:</strong> ${formatDuration(stats.remaining)}</div>
+        <div class="dic-break ${breakClass}">
+            Pausa ${formatDuration(breakMinutes)}
         </div>
-    </div>
-
-    <div class="dic-break ${breakClass}">
-        Pausa ${formatDuration(breakMinutes)}
-    </div>
-`;
+    `;
 }
 
 function start() {
