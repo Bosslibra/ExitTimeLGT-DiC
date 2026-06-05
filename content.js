@@ -140,8 +140,8 @@ async function renderWidget() {
             <div class="dic-exit-time">${stats.exitTime}</div>
 
             <div class="dic-mini">
-                <div><strong>Lavorato</strong> ${formatDuration(stats.worked)}</div>
-                <div><strong>Residuo</strong> ${formatDuration(stats.remaining)}</div>
+                <div class="dic-mini-item"><strong>Lavorato</strong> ${formatDuration(stats.worked)}</div>
+                <div class="dic-mini-item"><strong>Residuo</strong> ${formatDuration(stats.remaining)}</div>
             </div>
         </div>
 
