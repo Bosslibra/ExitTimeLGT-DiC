@@ -152,19 +152,26 @@ async function renderWidget() {
 }
 
 function start() {
-
-    renderWidget();
-
-    setInterval(() => {
-        try {
+    // Wait for dashboard elements to be available
+    const checkInterval = setInterval(() => {
+        const data = parseDashboard();
+        if (data) {
+            clearInterval(checkInterval);
             renderWidget();
-        } catch (err) {
-            console.error(
-                "DIC Exit Time:",
-                err
-            );
+            
+            // Update every minute after widget appears
+            setInterval(() => {
+                try {
+                    renderWidget();
+                } catch (err) {
+                    console.error(
+                        "DIC Exit Time:",
+                        err
+                    );
+                }
+            }, 60000); // precision is in minutes, so we update every 60 seconds
         }
-    }, 10000);
+    }, 500);
 }
 
 start();
