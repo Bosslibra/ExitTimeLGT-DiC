@@ -35,32 +35,33 @@ function parseDashboard() {
     const activeSession =
         document.querySelector(".active-session");
 
-    if (!endedSession || !activeSession) {
-        return null;
-    }
-
-    const endedTimes = [
-        ...endedSession.querySelectorAll(".hour-session span")
-    ].map(el => el.textContent.trim());
-
-    if (endedTimes.length < 2) {
-        return null;
-    }
+    const endedTimes = endedSession
+        ? [...endedSession.querySelectorAll(".hour-session span")]
+            .map(el => el.textContent.trim())
+        : [];
 
     const activeTime =
         activeSession
-            .querySelector("span")
+            ?.querySelector("span")
             ?.textContent
-            ?.trim();
+            ?.trim() || null;
 
-    if (!activeTime) {
+    const sessions = [];
+    for (let i = 0; i + 1 < endedTimes.length; i += 2) {
+        sessions.push({
+            entry: endedTimes[i],
+            exit: endedTimes[i + 1]
+        });
+    }
+
+    // Nothing to show without at least one entry
+    if (sessions.length === 0 && !activeTime) {
         return null;
     }
 
     return {
-        entry: endedTimes[0],
-        lunchStart: endedTimes[1],
-        lunchEnd: activeTime
+        sessions,
+        activeEntry: activeTime
     };
 }
 function getBreakColor(minutes) {
@@ -72,37 +73,78 @@ function getBreakColor(minutes) {
 
 
 function calculate(data, settings) {
-    const entry = timeToMinutes(data.entry);
-    const lunchStart = timeToMinutes(data.lunchStart);
-    const lunchEndActual = timeToMinutes(data.lunchEnd);
-
-    const lunchDuration = lunchEndActual - lunchStart;
-    const morningWorked = lunchStart - entry;
-    const dailyMinutes = Math.round(settings.dailyHours * 60);
-
-    const exitMinutes =
-        lunchEndActual +
-        (dailyMinutes - morningWorked);
+    const sessions = data.sessions.map(session => ({
+        entry: timeToMinutes(session.entry),
+        exit: timeToMinutes(session.exit)
+    }));
+    const activeEntry = data.activeEntry
+        ? timeToMinutes(data.activeEntry)
+        : null;
 
     const now = new Date();
     const currentMinutes =
         now.getHours() * 60 +
         now.getMinutes();
 
+    const dailyMinutes = Math.round(settings.dailyHours * 60);
+    const defaultBreak = settings.breakMin;
+
+    const completedWorked = sessions.reduce(
+        (total, session) => total + Math.max(0, session.exit - session.entry),
+        0
+    );
+    const missingWork = Math.max(0, dailyMinutes - completedWorked);
+
+    // Gaps between closed sessions (and the active one, if any)
+    const closedBreaks = sessions.reduce((total, session, index) => {
+        const nextEntry = index + 1 < sessions.length
+            ? sessions[index + 1].entry
+            : activeEntry;
+        return nextEntry === null
+            ? total
+            : total + Math.max(0, nextEntry - session.exit);
+    }, 0);
+
+    // Only an entry: exit is estimated with the default break
+    if (sessions.length === 0) {
+        const worked = Math.max(0, currentMinutes - activeEntry);
+        return {
+            mode: "estimated",
+            defaultBreak,
+            exitTime: minutesToTime(activeEntry + dailyMinutes + defaultBreak),
+            worked,
+            remaining: Math.max(0, dailyMinutes - worked)
+        };
+    }
+
+    // Exit recorded, no active entry: currently on break
+    if (activeEntry === null) {
+        const lastExit = sessions[sessions.length - 1].exit;
+        const breakSoFar = closedBreaks + Math.max(0, currentMinutes - lastExit);
+        const returnMinutes = lastExit + Math.max(0, defaultBreak - closedBreaks);
+        return {
+            mode: "break",
+            defaultBreak,
+            breakDuration: breakSoFar,
+            returnTime: minutesToTime(returnMinutes),
+            exitTime: minutesToTime(Math.max(returnMinutes, currentMinutes) + missingWork),
+            worked: completedWorked,
+            remaining: missingWork
+        };
+    }
+
     const afternoonWorked =
-        Math.max(0, currentMinutes - lunchEndActual);
+        Math.max(0, currentMinutes - activeEntry);
 
     const worked =
-        morningWorked + afternoonWorked;
-
-    const remaining =
-        Math.max(0, dailyMinutes - worked);
+        completedWorked + afternoonWorked;
 
     return {
-        lunchDuration,
-        exitTime: minutesToTime(exitMinutes),
+        mode: "normal",
+        breakDuration: closedBreaks,
+        exitTime: minutesToTime(activeEntry + missingWork),
         worked,
-        remaining
+        remaining: Math.max(0, dailyMinutes - worked)
     };
 }
 
@@ -127,13 +169,25 @@ async function renderWidget() {
         target.appendChild(widget);
     }
 
-    const breakMinutes =
-        timeToMinutes(data.lunchEnd) - timeToMinutes(data.lunchStart);
-
-    const breakClass =
-        breakMinutes < settings.breakMin || breakMinutes > settings.breakMax
-            ? "is-warn"
-            : "is-ok";
+    let footer;
+    if (stats.mode === "estimated") {
+        footer = `
+        <div class="dic-break">
+            Uscita stimata in base a ${stats.defaultBreak} min di pausa
+        </div>`;
+    } else {
+        const breakClass =
+            stats.breakDuration < settings.breakMin || stats.breakDuration > settings.breakMax
+                ? "is-warn"
+                : "is-ok";
+        const returnInfo = stats.mode === "break"
+            ? ` &middot; Rientro ${stats.returnTime} (${stats.defaultBreak} min)`
+            : "";
+        footer = `
+        <div class="dic-break ${breakClass}">
+            Pausa ${formatDuration(stats.breakDuration)}${returnInfo}
+        </div>`;
+    }
 
     widget.innerHTML = `
         <div class="dic-row-top">
@@ -144,10 +198,7 @@ async function renderWidget() {
                 <div class="dic-mini-item"><strong>Residuo</strong> ${formatDuration(stats.remaining)}</div>
             </div>
         </div>
-
-        <div class="dic-break ${breakClass}">
-            Pausa ${formatDuration(breakMinutes)}
-        </div>
+        ${footer}
     `;
 }
 
